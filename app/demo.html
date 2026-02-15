@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <video id="video" autoplay></video>
+  <canvas id="canvas" style="display:none;"></canvas>
+  <h2 id="alerts"></h2>
+
+  <script>
+    const video = document.getElementById("video");
+    const canvas = document.getElementById("canvas");
+    const alerts = document.getElementById("alerts");
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => video.srcObject = stream);
+
+    setInterval(() => {
+      const ctx = canvas.getContext("2d");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0);
+
+      canvas.toBlob(blob => {
+        const formData = new FormData();
+        formData.append("file", blob);
+
+        fetch("https://your-api-url/process-frame", {
+          method: "POST",
+          body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+          const anomalies = data.anomalies || [];
+          const flags = anomalies.map(a => {
+            if (a.imposter_detected) return "IMPOSTER";
+            if (a.looking_away) return "LOOKING AWAY";
+            if (a.multiple_faces) return "MULTIPLE FACES";
+          }).filter(Boolean);
+
+          alerts.innerText = flags.join(" | ");
+        });
+      }, "image/jpeg");
+
+    }, 2000); // every 2 seconds
+  </script>
+</body>
+</html>

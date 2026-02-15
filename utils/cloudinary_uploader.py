@@ -7,13 +7,8 @@ import tempfile
 import traceback
 
 # Load Cloudinary credentials
+load_dotenv()
 
-env_path = os.path.join(os.getcwd(), ".env")
-if os.path.exists(env_path):
-    load_dotenv(env_path)
-    print(f"Loaded .env from: {env_path}")
-else:
-    print(f".env not found at: {env_path}")
 cloudinary.config(
     cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
     api_key=os.getenv("CLOUDINARY_API_KEY"),

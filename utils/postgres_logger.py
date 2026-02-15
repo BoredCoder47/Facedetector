@@ -1,13 +1,28 @@
 import psycopg2
+import os
 import time
+from dotenv import load_dotenv
 
 
 class PostgresLogger:
-    def __init__(self, db_config):
-        self.db_config = db_config
-        self.conn = psycopg2.connect(**db_config)
-        self.cur = self.conn.cursor()
-        self._ensure_tables()
+    def __init__(self, db_config=None):
+        load_dotenv()
+
+        DATABASE_URL = os.getenv("DATABASE_URL")
+        if not DATABASE_URL:
+            raise EnvironmentError("DATABASE_URL not found.")
+
+        try:
+            self.conn = psycopg2.connect(
+                DATABASE_URL,
+                sslmode="require"
+            )
+            self.cur = self.conn.cursor()
+            self._ensure_tables()
+            print("✅ Postgres connected successfully.")
+        except Exception as e:
+            print("❌ Postgres connection failed:", e)
+            raise
 
     def _ensure_tables(self):
         """Create tables if they don't exist."""

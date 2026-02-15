@@ -9,7 +9,7 @@ from utils.cloudinary_uploader import CloudinaryUploader
 
 
 class FrameProcessor:
-    def __init__(self, db_config, expected_user=None, session_id=None):
+    def __init__(self, expected_user=None, session_id=None):
         # Auto-generate session ID if not provided
         self.session_id = session_id or generate_session_id(prefix="video")
 
@@ -18,8 +18,8 @@ class FrameProcessor:
         self.face_recognizer = FaceRecognizer()
         self.expected_user = expected_user
 
-        # Postgres logger
-        self.logger = PostgresLogger(db_config)
+        # Postgres logger (no db_config now)
+        self.logger = PostgresLogger()
 
         # Mediapipe face detection
         self.mp_face_detection = mp.solutions.face_detection
@@ -100,7 +100,7 @@ class FrameProcessor:
                     looking_away = True
 
             # --- Determine if this anomaly should trigger Cloudinary upload ---
-            upload_needed = multiple_faces or imposter_detected or looking_away
+            upload_needed = False
             cloud_url = None
 
             if upload_needed:
