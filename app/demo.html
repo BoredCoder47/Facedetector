@@ -1,46 +1,86 @@
 <!DOCTYPE html>
 <html>
+
+<head>
+    <title>Exam Proctor Demo</title>
+    <style>
+        body {
+            font-family: Arial;
+            text-align: center;
+        }
+
+        video {
+            border: 2px solid black;
+        }
+
+        #alerts {
+            color: red;
+            font-size: 20px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+
 <body>
-  <video id="video" autoplay></video>
-  <canvas id="canvas" style="display:none;"></canvas>
-  <h2 id="alerts"></h2>
 
-  <script>
-    const video = document.getElementById("video");
-    const canvas = document.getElementById("canvas");
-    const alerts = document.getElementById("alerts");
+    <h2>Exam Proctoring Demo</h2>
 
-    navigator.mediaDevices.getUserMedia({ video: true })
-      .then(stream => video.srcObject = stream);
+    <video id="video" width="640" height="480" autoplay></video>
+    <canvas id="canvas" style="display:none;"></canvas>
 
-    setInterval(() => {
-      const ctx = canvas.getContext("2d");
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      ctx.drawImage(video, 0, 0);
+    <div id="alerts"></div>
 
-      canvas.toBlob(blob => {
-        const formData = new FormData();
-        formData.append("file", blob);
+    <script>
+        const video = document.getElementById("video");
+        const canvas = document.getElementById("canvas");
+        const alertsDiv = document.getElementById("alerts");
 
-        fetch("https://your-api-url/process-frame", {
-          method: "POST",
-          body: formData
-        })
-        .then(res => res.json())
-        .then(data => {
-          const anomalies = data.anomalies || [];
-          const flags = anomalies.map(a => {
-            if (a.imposter_detected) return "IMPOSTER";
-            if (a.looking_away) return "LOOKING AWAY";
-            if (a.multiple_faces) return "MULTIPLE FACES";
-          }).filter(Boolean);
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => video.srcObject = stream)
+            .catch(err => alert("Camera error: " + err));
 
-          alerts.innerText = flags.join(" | ");
-        });
-      }, "image/jpeg");
+        setInterval(() => {
+            const ctx = canvas.getContext("2d");
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.drawImage(video, 0, 0);
 
-    }, 2000); // every 2 seconds
-  </script>
+            canvas.toBlob(blob => {
+  if (!blob) {
+    console.log("Blob not ready yet");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("file", blob, "frame.jpg");
+
+  fetch("http://localhost:8000/process-frame", {
+    method: "POST",
+    body: formData
+  })
+  .then(res => res.json())
+  .then(data => {
+    console.log("API:", data);
+
+    const anomalies = data.anomalies || [];
+    let flags = [];
+
+    anomalies.forEach(a => {
+      if (a.imposter_detected) flags.push("IMPOSTER DETECTED");
+      if (a.looking_away) flags.push("LOOKING AWAY");
+      if (a.multiple_faces) flags.push("MULTIPLE FACES");
+    });
+
+    alertsDiv.innerText = flags.join(" | ");
+  })
+  .catch(err => console.error(err));
+
+}, "image/jpeg");
+
+
+        }, 2000); // send frame every 2 seconds
+    </script>
+
 </body>
+
 </html>

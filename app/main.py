@@ -6,7 +6,7 @@ from fastapi import FastAPI, UploadFile, File
 from dotenv import load_dotenv
 from urllib.parse import urlparse
 from workers.frame_processor import FrameProcessor
-
+from fastapi.middleware.cors import CORSMiddleware
 
 # -----------------------------
 # Load Environment Variables
@@ -35,6 +35,13 @@ db_config = {
 # -----------------------------
 app = FastAPI(title="Exam Proctoring Demo API")
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],   # demo only
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # -----------------------------
 # Initialize FrameProcessor ONCE
